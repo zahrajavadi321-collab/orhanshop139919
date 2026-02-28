@@ -1,0 +1,162 @@
+!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فروشگاه لباس اورهان</title>
+<style>
+* { box-sizing: border-box; margin:0; padding:0; }
+body { font-family: Tahoma, sans-serif; background:#f9f9f9; text-align:right; }
+header { background:#f08cb9; color:white; padding:20px; text-align:center; position:sticky; top:0; z-index:1000; }
+header h1 { margin:0; font-size:26px; }
+.navbar { display:flex; justify-content:center; flex-wrap:wrap; margin-top:10px; }
+.navbar .dropdown { position:relative; margin:0 10px; }
+.navbar .dropbtn { background:#d36cae; color:white; padding:10px 15px; border:none; cursor:pointer; border-radius:5px; }
+.navbar .dropdown-content { display:none; position:absolute; background:white; min-width:150px; box-shadow:0 5px 15px rgba(0,0,0,0.2); border-radius:5px; overflow:hidden; right:0; }
+.navbar .dropdown-content button { width:100%; padding:10px; border:none; background:none; text-align:right; cursor:pointer; transition:0.3s; }
+.navbar .dropdown-content button:hover { background:#f08cb9; color:white; }
+.navbar .dropdown:hover .dropdown-content { display:block; }
+
+.filter-price { text-align:center; margin:20px 0; }
+.filter-price input { width:80px; margin:0 5px; padding:5px; }
+
+.product-list { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+.product { width: 90%; max-width: 600px; margin: 15px 0; padding: 15px; border: 1px solid #ccc; background:white; border-radius:8px; box-shadow:0 3px 8px rgba(0,0,0,0.15); }
+.product img { width:100%; height:auto; border-radius:8px; }
+.product h3 { margin:10px 0 5px 0; color:#ff4d6d; }
+.product p { margin:5px 0; color:#333; font-size:16px; }
+.product button { margin-top:10px; padding:8px 15px; cursor:pointer; border:none; background:#f08cb9; color:white; border-radius:5px; transition:0.3s; }
+.product button:hover { background:#d36cae; }
+
+.cart { border-top:2px solid #f08cb9; margin-top:30px; padding:15px; width:90%; max-width:500px; background:white; border-radius:5px; margin:auto; }
+.cart h2 { text-align:center; margin-bottom:10px; }
+.cart ul { list-style:none; padding:0; margin:10px 0; }
+.cart li { display:flex; justify-content:space-between; margin:5px 0; }
+.cart li button { padding:2px 5px; cursor:pointer; background:red; color:white; border:none; border-radius:3px; }
+.cart button#checkout { margin-top:10px; width:100%; padding:10px; background:#28a745; color:white; border:none; border-radius:5px; cursor:pointer; transition:0.3s; }
+.cart button#checkout:hover { background:#218838; }
+
+footer { background:#f08cb9; color:white; text-align:center; padding:15px; margin-top:20px; }
+
+@media(max-width:600px){
+  .product { width:95%; }
+  .navbar { flex-direction:column; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>فروشگاه لباس اورهان</h1>
+  <nav class="navbar">
+    <div class="dropdown">
+      <button class="dropbtn">دسته‌بندی</button>
+      <div class="dropdown-content">
+        <button onclick="showProducts('girls')">دخترانه</button>
+        <button onclick="showProducts('boys')">پسرانه</button>
+        <button onclick="showProducts('baby')">بچه‌گانه</button>
+        <button onclick="showProducts('sale')">تخفیف‌ها</button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<section class="filter-price">
+  <label>حداقل قیمت: <input type="number" id="minPrice" value="0"></label>
+  <label>حداکثر قیمت: <input type="number" id="maxPrice" value="1000000"></label>
+  <button onclick="filterPrice()">اعمال فیلتر</button>
+</section>
+
+<section class="product-list" id="productList">
+  <!-- محصولات با JS اضافه می‌شوند -->
+</section>
+
+<section class="cart">
+  <h2>سبد خرید</h2>
+  <ul id="cartList"></ul>
+  <p id="total">جمع کل: 0 تومان</p>
+  <button id="checkout" onclick="checkout()">تسویه حساب</button>
+</section>
+
+<footer>
+  <p>© 2026 فروشگاه لباس اورهان</p>
+</footer>
+<script>
+const products={
+  girls:[
+    {id:1, name:"پیراهن گلدار", price:150000, image:"https://via.placeholder.com/600x300?text=دخترانه+1"},
+    {id:2, name:"تی‌شرت صورتی", price:120000, image:"https://via.placeholder.com/600x300?text=دخترانه+2"}
+  ],
+  boys:[
+    {id:3, name:"شلوار جین", price:160000, image:"https://via.placeholder.com/600x300?text=پسرانه+1"},
+    {id:4, name:"تی‌شرت آبی", price:130000, image:"https://via.placeholder.com/600x300?text=پسرانه+2"}
+  ],
+  baby:[
+    {id:5, name:"لباس نوزاد 1", price:90000, image:"https://via.placeholder.com/600x300?text=بچه‌گانه+1"},
+    {id:6, name:"لباس نوزاد 2", price:95000, image:"https://via.placeholder.com/600x300?text=بچه‌گانه+2"}
+  ],
+  sale:[
+    {id:7, name:"پیراهن تخفیف خورده", price:90000, image:"https://via.placeholder.com/600x300?text=تخفیف+1"},
+    {id:8, name:"تی‌شرت تخفیف خورده", price:80000, image:"https://via.placeholder.com/600x300?text=تخفیف+2"}
+  ]
+};
+
+let cart=[];
+
+function showProducts(category){
+  const minPrice=parseInt(document.getElementById('minPrice').value)||0;
+  const maxPrice=parseInt(document.getElementById('maxPrice').value)||1000000;
+  const productList=document.getElementById('productList');
+  productList.innerHTML='';
+  (products[category]||[]).forEach(p=>{
+    if(p.price>=minPrice && p.price<=maxPrice){
+      const div=document.createElement('div');
+      div.classList.add('product');
+      div.innerHTML=
+        <img src="${p.image}" alt="${p.name}">
+        <h3>${p.name}</h3>
+        <p>قیمت: ${p.price.toLocaleString()} تومان</p>
+        <button onclick="addToCart(${p.id})">افزودن به سبد خرید</button>;
+      productList.appendChild(div);
+    }
+  });
+}
+
+function filterPrice(){
+  showProducts('girls');
+}
+
+function addToCart(productId){
+  const product=Object.values(products).flat().find(p=>p.id===productId);
+  if(product){ cart.push(product); updateCart(); }
+}
+
+function updateCart(){
+  const cartList=document.getElementById('cartList');
+  const totalP=document.getElementById('total');
+  cartList.innerHTML='';
+  let total=0;
+  cart.forEach((p,index)=>{
+    total+=p.price;
+    const li=document.createElement('li');
+    li.textContent=${p.name} - ${p.price.toLocaleString()} تومان;
+    const removeBtn=document.createElement('button');
+    removeBtn.textContent='حذف';
+    removeBtn.onclick=()=>{cart.splice(index,1); updateCart();};
+    li.appendChild(removeBtn);
+    cartList.appendChild(li);
+  });
+  totalP.textContent=جمع کل: ${total.toLocaleString()} تومان;
+}
+
+function checkout(){
+  if(cart.length===0){ alert("سبد خرید خالی است!"); return; }
+  alert("سبد خرید شما ثبت شد!\nجمع کل: "+cart.reduce((sum,p)=>sum+p.price,0).toLocaleString()+" تومان");
+  cart=[]; updateCart();
+}
+
+showProducts('girls');
+</script>
+
+</body>
+</html>
